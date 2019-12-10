@@ -34,6 +34,7 @@ class Motu extends EventEmitter {
       set: (target, prop, value) => {
         // Only update number values.
         if (typeof target[prop] === "object") return true;
+        if (typeof value !== "number") return true;
         target[prop] = value;
         this.queueUpdate({ path: `${path}/${prop}`, value });
         return true;
@@ -122,7 +123,6 @@ class Motu extends EventEmitter {
   }
 
   _matrixPost(parameters) {
-    console.log("Sending update", parameters);
     const body = new FormData();
     body.append("json", JSON.stringify(parameters));
     fetch(`${this._address}/datastore?client=${this._clientId}`, {
@@ -161,7 +161,6 @@ class Motu extends EventEmitter {
     if (!this._address) {
       return;
     }
-    console.log("Getting new data");
     const path = "/datastore?client=" + this._clientId;
     let headers = {};
     if (this._eTagData > 0) {
