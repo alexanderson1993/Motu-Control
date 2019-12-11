@@ -1,7 +1,7 @@
 const fs = require("fs").promises;
 const express = require("express");
 const app = express();
-const port = 3000;
+const port = 6000;
 
 const clients = {};
 

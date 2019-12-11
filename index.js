@@ -7,7 +7,7 @@ class Motu extends EventEmitter {
   constructor(address) {
     super();
     if (!address) throw new Error("Address must be provided");
-    this._address = address;
+    this.address = address;
 
     this._eTagData = -1;
     this._clientId = Math.round(Math.random() * 10000000);
@@ -58,6 +58,7 @@ class Motu extends EventEmitter {
   }
 
   get mixerInputChannels() {
+    if (Object.keys(this._data).length === 0) return [];
     const deepData = unflatten(this._data, { delimiter: "/" });
     const { obank, ibank } = deepData.ext;
     const inputMixers = obank.find(o => o.name === "Mix In");
@@ -82,6 +83,7 @@ class Motu extends EventEmitter {
   }
 
   get mixerOutputChannels() {
+    if (Object.keys(this._data).length === 0) return [];
     const deepData = unflatten(this._data, { delimiter: "/" });
     const { ibank } = deepData.ext;
 
@@ -125,7 +127,7 @@ class Motu extends EventEmitter {
   _matrixPost(parameters) {
     const body = new FormData();
     body.append("json", JSON.stringify(parameters));
-    fetch(`${this._address}/datastore?client=${this._clientId}`, {
+    fetch(`${this.address}/datastore?client=${this._clientId}`, {
       method: "PATCH",
       headers: { connection: "keep-alive" },
       body
@@ -133,7 +135,7 @@ class Motu extends EventEmitter {
       .then(res => {
         if (res.status < 200 || res.status > 299) {
           console.log(
-            "Error updating audio matrix: " + this._address,
+            "Error updating audio matrix: " + this.address,
             parameters,
             res.status
           );
@@ -143,7 +145,7 @@ class Motu extends EventEmitter {
         console.log(err);
         if (err) {
           console.log(
-            "Error updating audio matrix: " + this._address,
+            "Error updating audio matrix: " + this.address,
             parameters,
             err
           );
@@ -158,7 +160,7 @@ class Motu extends EventEmitter {
   }
 
   _getNewData() {
-    if (!this._address) {
+    if (!this.address) {
       return;
     }
     const path = "/datastore?client=" + this._clientId;
@@ -168,7 +170,7 @@ class Motu extends EventEmitter {
       // It waits to send response until something has changed, and increases the ETag number.
       headers["If-None-Match"] = this._eTagData;
     }
-    fetch(`${this._address}${path}`, { headers })
+    fetch(`${this.address}${path}`, { headers })
       .then(response => {
         if (response.status >= 200 && response.status < 300) {
           this._eTagData = response.headers.get("etag");
@@ -179,6 +181,9 @@ class Motu extends EventEmitter {
           return null;
         } else {
           console.log("Unexpected http status " + response.status);
+          setTimeout(() => {
+            this._getNewData();
+          }, 1000 * 10);
           return null;
         }
       })
@@ -190,6 +195,9 @@ class Motu extends EventEmitter {
       })
       .catch(err => {
         console.log("Unexpected error", err);
+        setTimeout(() => {
+          this._getNewData();
+        }, 1000 * 10);
       });
   }
 
