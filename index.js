@@ -67,6 +67,19 @@ class Motu extends EventEmitter {
       .map((m, key) => {
         const [device, channel] = m.src.split(":");
         const input = ibank[device].ch[channel];
+        const { config } = deepData.mix.chan[key];
+        let name = m.name || input.name || input.defaultName;
+
+        console.log(config);
+        // For stereo channel, rename them to remove indication of the left channel
+        if (config.format === "2:0") {
+          name = name.replace(" L", "").replace(" Left", "");
+        }
+        // Don't display the right channel for stereo channels at all.
+        // This mimics the behavior of the MOTU and simplified the UI.
+        // The MOTU uses the left channel's settings for the right channel
+        // automatically.
+        if (config.format === "2:1") return null;
         return {
           ...m,
           chan: key,
@@ -76,9 +89,10 @@ class Motu extends EventEmitter {
             deepData.mix.chan[key],
             this.makeProxyHandler(`mix/chan/${key}`)
           ),
-          name: m.name || input.name || input.defaultName
+          name
         };
-      });
+      })
+      .filter(Boolean);
     return mixerInputChannels;
   }
 
@@ -119,7 +133,24 @@ class Motu extends EventEmitter {
           };
         })
       )
-      .filter(m => m.name && m.mix);
+      .map(m => {
+        const config = m && m.mix && m.mix.config;
+        let name = m.name;
+        // For stereo channel, rename them to remove indication of the left channel
+        if ((config && config.format === "2:0") || m.type === "group") {
+          name = name.replace(" L", "").replace(" Left", "");
+        }
+        // Don't display the right channel for stereo channels at all.
+        // This mimics the behavior of the MOTU and simplified the UI.
+        // The MOTU uses the left channel's settings for the right channel
+        // automatically.
+        if (config && config.format === "2:1") return null;
+        return {
+          ...m,
+          name
+        };
+      })
+      .filter(m => m && m.name && m.mix);
 
     return mixerOutputChannels;
   }
