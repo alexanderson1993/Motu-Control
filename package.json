@@ -1,6 +1,6 @@
 {
   "name": "motu-control",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A JavaScript controller for MOTU devices using the HTTP/JSON API. Works in both browsers and NodeJS",
   "main": "index.js",
   "scripts": {

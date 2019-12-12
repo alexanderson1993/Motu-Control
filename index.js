@@ -70,7 +70,6 @@ class Motu extends EventEmitter {
         const { config } = deepData.mix.chan[key];
         let name = m.name || input.name || input.defaultName;
 
-        console.log(config);
         // For stereo channel, rename them to remove indication of the left channel
         if (config.format === "2:0") {
           name = name.replace(" L", "").replace(" Left", "");
@@ -173,7 +172,6 @@ class Motu extends EventEmitter {
         }
       })
       .catch(err => {
-        console.log(err);
         if (err) {
           console.log(
             "Error updating audio matrix: " + this.address,
@@ -211,7 +209,6 @@ class Motu extends EventEmitter {
           this._refreshData();
           return null;
         } else {
-          console.log("Unexpected http status " + response.status);
           setTimeout(() => {
             this._getNewData();
           }, 1000 * 10);
@@ -225,7 +222,6 @@ class Motu extends EventEmitter {
         }
       })
       .catch(err => {
-        console.log("Unexpected error", err);
         setTimeout(() => {
           this._getNewData();
         }, 1000 * 10);
