@@ -16,31 +16,30 @@ class Motu extends EventEmitter {
     this._updateQueue = {};
     this._updateTimeout = null;
 
+    this.makeProxyHandler = (path = "") => {
+      return {
+        get: (target, prop) => {
+          if (typeof target[prop] === "object" && target[prop] !== null) {
+            return new Proxy(
+              target[prop],
+              this.makeProxyHandler(`${path}${path ? "/" : ""}${prop}`)
+            );
+          } else {
+            return target[prop];
+          }
+        },
+        set: (target, prop, value) => {
+          // Only update number values.
+          if (typeof target[prop] === "object") return true;
+          if (typeof value !== "number") return true;
+          target[prop] = value;
+          this.queueUpdate({ path: `${path}/${prop}`, value });
+          return true;
+        }
+      };
+    };
     this._getNewData();
   }
-
-  makeProxyHandler = (path = "") => {
-    return {
-      get: (target, prop) => {
-        if (typeof target[prop] === "object" && target[prop] !== null) {
-          return new Proxy(
-            target[prop],
-            this.makeProxyHandler(`${path}${path ? "/" : ""}${prop}`)
-          );
-        } else {
-          return target[prop];
-        }
-      },
-      set: (target, prop, value) => {
-        // Only update number values.
-        if (typeof target[prop] === "object") return true;
-        if (typeof value !== "number") return true;
-        target[prop] = value;
-        this.queueUpdate({ path: `${path}/${prop}`, value });
-        return true;
-      }
-    };
-  };
 
   queueUpdate({ path, value }) {
     this._updateQueue = { ...this._updateQueue, [path]: value };
